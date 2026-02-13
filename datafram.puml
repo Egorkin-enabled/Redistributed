@@ -1,0 +1,28 @@
+@startuml
+
+!theme plain
+skinparam DefaultFontName Monospaced
+
+left to right direction
+
+rectangle "Tensor Name [zero-terminated string]" as Name
+rectangle "Dimensionality [byte]" as Dim
+rectangle "Model GUID [16 x byte]" as GUID
+note "D" as D
+note "L" as L
+
+Dim -> D
+
+rectangle "Offsets [D x int32]" as Offset
+rectangle "Lengths [D x int32]" as Lengths
+Lengths -> L
+
+rectangle "Buffer [(П_j^D L_j) x float32]" as Buffer
+
+Name  --> GUID
+GUID  -right-> Dim
+Dim --> Offset
+Offset -right-> Lengths
+Lengths --> Buffer
+
+@enduml

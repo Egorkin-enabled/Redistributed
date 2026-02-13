@@ -1,0 +1,10 @@
+@startuml
+
+!theme plain
+skinparam DefaultFontName Monospaced
+
+interface IChunkSyncer {}
+
+UDPChunkSyncer -- 
+
+@enduml

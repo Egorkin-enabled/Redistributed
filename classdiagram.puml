@@ -1,0 +1,128 @@
+@startuml
+
+!theme plain
+skinparam DefaultFontName Monospaced
+
+interface IBatchScheduler {
+    + :ISubset <<get>>
+    + NextSubset()
+}
+
+interface ISubset {
+    + Step(): Tensor <<Loss measure>>
+    + this[name: string]:RemoteTensor <<get>>
+}
+
+ISubset "0" -right-> "*" IRemoteTensor: <<Consists of>>
+IApplier ..> Chunk: <<Uses to apply>>
+
+IBatchScheduler "0" ..> "1" ISubset: <<Manages instance for proper batch step>>
+
+class Node {
+	+ctor(:IChunkSyncer, :ISubset, IBatchScheduler, :IApplier)
+}
+
+
+interface IChunkSyncer {
+    + ChunkReceived: Action<Chunk> <<event>>
+    + SendChunk(:Chunk)
+}
+
+IChunkSyncer .left.> Chunk: <<uses as fundamental sync unit>>
+
+class EchoRoomChunkSyncer {
+	+ ctor(:IChunkSyncer[0..*])
+}
+
+IChunkSyncer <|-- UDPChunkSyncer
+IChunkSyncer <|-- TCPServerChunkSyncer
+IChunkSyncer <|-- TCPClientChunkSyncer
+IChunkSyncer <|-- EchoRoomChunkSyncer
+
+IChunkSyncer "*" <--- "0" EchoRoomChunkSyncer: <<Ensures\ndata exchange\nbetween>>
+
+note "Breaks large Chunk into\nsmaller ones automatically" as \
+	AutoBreak
+
+AutoBreak .up. UDPChunkSyncer
+
+Node "0" --> "1" IChunkSyncer: <<uses to get changes>>
+Node -left-> IApplier: <<uses to apply given changes>>
+
+Node ..> Chunk: <<depends on>>
+Node -right-o IBatchScheduler: <<Extracts model by>> 
+Node -right-o ISubset: <<ensures whole model get synced properly through>> 
+
+class Chunk {
+    + name: string
+    + offset: int[1..*]
+    + data: Tensor
+	+ {static} AsCunk(:IRemoteTensor):Chunk
+}
+
+
+interface IRemoteTensor {
+    + name: string <<get>>
+    + data: Tensor <<get/set>>
+}
+
+interface IApplier {
+    + apply(:Tensor, :Chunk)
+}
+
+interface ISummaryWriter <<tensorflow.SummaryWriter subclass/adapter>> {
+	+ AddScalar(tag:string, value:float, group:int)
+	+ AddEmbedding(tag:string, embending:Tensor, group:int)
+	+ {method} ...
+}
+
+class Loop {
+	+ctor(:Node, :ISummaryWriter[0..1])
+	+ Tick()
+	+ Start()
+}
+
+Loop --> Node: <<Manages train loop>>
+Loop -right-> ISummaryWriter: <<Uses to log changes>>
+
+class MovingAverageApplier {
+	+ctor(factor:float=0.5)
+}
+
+MovingAverageApplier --|> IApplier
+InstantApplier --|> IApplier
+
+class StandardNodeBuilder {
+	+ Build(): Node
+	+ AddTCPServer()
+	+ ConnectViaTCP(ip, port)
+	+ AddUDPBroadcating()
+	+ UseModelLib(:Module)
+	+ UseModelLib(:Importer)
+}
+
+object Module <<python module>> {
+	+ Model: ISubset
+	+ Scheduler: IBatchScheduler
+}
+
+StandardNodeBuilder ...> Node: <<Builds it>>
+StandardNodeBuilder .right.> Module: <<Dynamically loads it>>
+
+class RemoteImporter {
+	+ ctor(tar:URL, assetsLocalPath:string)
+}
+
+class LocalImporter {
+	+ ctor(assetsPath:string)
+}
+
+RemoteImporter ..> Module: <<Produces from downloaded remotely>>
+LocalImporter ..> Module: <<Produces from local assets>>
+
+Importer <|.. LocalImporter
+Importer <|.. RemoteImporter
+
+StandardNodeBuilder .up..> Importer: <<May use it for loading>>
+
+@enduml
