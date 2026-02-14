@@ -1,0 +1,73 @@
+@startuml
+
+!theme plain
+skinparam DefaultFontName Monospaced
+
+title Connection via Wi-Fi in Local networks
+
+entity Node_1
+entity Node_2
+entity Node_3
+entity MasterNode
+
+Node_1 -> MasterNode: Broadcast: I'm here
+MasterNode -> MasterNode: Adds IP to table
+activate Node_1
+activate MasterNode
+MasterNode -> Node_1: [Connects via TCP]
+Node_1 -> MasterNode: I have no model weights/assets!
+MasterNode ->(30) Node_1: Alright! Your's assets is here!
+Node_1 --> MasterNode: Thanks! [CONNECTION IS CLOSED]
+deactivate Node_1
+deactivate MasterNode
+
+
+Node_1 -> Node_2: Broadcast: I'm here
+Node_2 -> Node_2: Adds IP to table
+
+Node_1 -[#red,dashed]> Node_3: Broadcast: I'm here [DATAGRAM IS LOST] 
+
+Node_3 -> Node_3: Adds IP to table
+
+Node_2 -> Node_1: Unicast: Chunk sync part
+Node_1 -> Node_1: Adds IP to table
+Node_1 -> Node_1: EMA to weights
+
+Node_2 -> Node_3: Unicast: Chunk part
+Node_3 -> Node_2: EMA to weights
+
+Node_2 -> MasterNode: Unicast: Chunk part
+MasterNode -> MasterNode: EMA to weights
+
+
+Node_3 -> Node_2: Unicast: Chunk sync part
+Node_2 -> Node_2: EMA to weights
+
+Node_3 -> MasterNode: Unicast: Chunk sync part
+MasterNode -> MasterNode: EMA to weights
+
+MasterNode -> Node_1: Unicast: Chunk sync part
+Node_1 -> Node_1: Adds IP to table
+
+=== After 30 seconds ==
+
+Node_3 -> Node_1: Broadcast: I'm here
+Node_1 -> Node_1: Adds IP to table
+Node_3 -> Node_2: Broadcast: I'm here
+Node_2 -> Node_2: Updates last\nIP occurance TimeStamp
+Node_3 -> MasterNode: Broadcast: I'm here
+
+MasterNode -> MasterNode: Updates last\nIP occurance TimeStamp
+
+activate MasterNode
+activate Node_3
+
+MasterNode -> Node_3: [Connects via TCP]
+Node_3 --> MasterNode: It seems I have synced weights\n'coz I'm getting chunks frequently enough. Thanks!\n[CONNECTION IS CLOSED]
+
+deactivate Node_3
+deactivate MasterNode
+
+== ... ==
+
+@enduml
