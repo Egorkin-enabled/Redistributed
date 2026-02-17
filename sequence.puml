@@ -10,16 +10,22 @@ entity Node_2
 entity Node_3
 entity MasterNode
 
-Node_1 -> MasterNode: Broadcast: I'm here
+=== Reg-in to the system ==
+
+Node_1 -> MasterNode: Broadcast: I'm here, no last update
 MasterNode -> MasterNode: Adds IP to table
 activate Node_1
 activate MasterNode
-MasterNode -> Node_1: [Connects via TCP]
-Node_1 -> MasterNode: I have no model weights/assets!
-MasterNode ->(30) Node_1: Alright! Your's assets is here!
-Node_1 --> MasterNode: Thanks! [CONNECTION IS CLOSED]
+
+MasterNode -> Node_1: [TCP CONNECT] Ya're new, Solider! Your stats?
+Node_1 -> MasterNode: No assets, Sir!
+MasterNode ->(30) Node_1: Take your assets.
+Node_1 --> MasterNode: ACK! [CONNECTION IS CLOSED]
+
 deactivate Node_1
 deactivate MasterNode
+
+Node_1 -> Node_1: Initializing code & assets.
 
 
 Node_1 -> Node_2: Broadcast: I'm here
@@ -55,18 +61,19 @@ Node_3 -> Node_1: Broadcast: I'm here
 Node_1 -> Node_1: Adds IP to table
 Node_3 -> Node_2: Broadcast: I'm here
 Node_2 -> Node_2: Updates last\nIP occurance TimeStamp
-Node_3 -> MasterNode: Broadcast: I'm here
+Node_3 -> MasterNode: Broadcast: I'm here last udpdate\nI've received at XXX
 
 MasterNode -> MasterNode: Updates last\nIP occurance TimeStamp
+MasterNode -> MasterNode: Checks how frequently this IP receives updates\n& seems this frequency is OK [NOTHING TO DO]
+& note over MasterNode
+H
+end note
+note over Node_2
 
-activate MasterNode
-activate Node_3
+This node seems to be lost
+for a while...
 
-MasterNode -> Node_3: [Connects via TCP]
-Node_3 --> MasterNode: It seems I have synced weights\n'coz I'm getting chunks frequently enough. Thanks!\n[CONNECTION IS CLOSED]
-
-deactivate Node_3
-deactivate MasterNode
+end note
 
 == ... ==
 

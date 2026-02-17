@@ -1,0 +1,14 @@
+@startuml
+
+!theme plain
+skinparam DefaultFontName Monospaced
+hide empty members
+
+interface IApplier {
+    + Apply(:RemoteTensor, :Chunk)
+}
+
+IApplier <|... ConditionalEMAApplier
+
+
+@enduml
