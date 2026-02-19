@@ -1,0 +1,61 @@
+@startuml
+
+!include ./style.puml
+
+interface IChunkSyncer {}
+
+IChunkSyncer <|.. UDPChunkSyncer
+
+interface IUDPRadar  {
+    - {field} m_knownNeighbors: list<(IP, TimeStamp)>
+    + {method} this[:int]: IP <<get>>
+    + count: int
+    +ctor(ipRememberTime: TimeSpan)
+    + Start(): CallableCancelator
+    + NotifyNewIncoming(:IP)
+}
+
+
+interface "list<T>" as Glist
+
+IUDPRadar -right-|> Glist: T is IP
+
+ISyncSelectionStrategy ..> Glist
+
+class UDPChunkSyncer {
+    + ctor(:IUDPRadar, :ISyncSelectionStrategy)
+}
+
+UDPChunkSyncer -right-> ISyncSelectionStrategy: <<Uses to select exchange targets>>\nT is IP
+
+class StochasticSelectionStrategy {
+    + ctor(takeProbability: float)
+}
+
+StochasticSelectionStrategy <|.. ISyncSelectionStrategy
+FullSelectionStrategy <|.. ISyncSelectionStrategy
+
+interface ISyncSelectionStrategy<T> {
+    + Select(:list<T>): list<T>
+}
+
+
+UDPChunkSyncer -- IUDPRadar: <<Uses to find exchange targets>>
+
+' UDPChunkSyncer 
+
+IUDPRadar <|.. ListsUDPRadar
+IUDPRadar <|.. BroadcastingUDPRadar
+
+class ListsUDPRadar {
+    + ctor(listenOnly: bool, idleTimeout: TimeSpan)
+}
+
+note "Uses Unicasting.\nListens for <<Help>> signals\nsends it if not `listenOnly` enabled" as N1
+note "Uses UDP broadcasting.\n(slower in Wi-Fi env but faster when wired)" as N2
+
+
+ListsUDPRadar --> N1
+BroadcastingUDPRadar --> N2
+
+@enduml

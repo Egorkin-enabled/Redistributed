@@ -1,0 +1,31 @@
+@startuml
+
+!include ./style.puml
+
+rectangle "Tensor ID [uint32]" as Name
+rectangle "CRC32 [uint32]" as CRC  
+rectangle "Dimensionality [byte]" as Dim
+rectangle "Model GUID [16 x byte]" as GUID
+rectangle "Session GUID [16 x byte]" as SessionGUID
+note "D" as D
+note "L" as L
+Dim --> D
+
+rectangle "Offsets [D x int32]" as Offset
+rectangle "Shape [D x int32]" as Lengths
+Lengths --> L
+
+rectangle "Buffer [(П_j^D L_j) x float16]" as Buffer
+
+CRC -> SessionGUID
+SessionGUID --> GUID 
+GUID  -> Name
+Name  --> Dim
+Dim -> Offset
+Offset --> Lengths
+Lengths -> Buffer
+Buffer --> EndOfPackage
+
+StartOfPackage --> CRC
+
+@enduml

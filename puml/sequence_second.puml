@@ -1,0 +1,91 @@
+@startuml
+
+!include ./style.puml
+
+entity Client1
+entity Client2
+entity Master
+
+==IP Broadcasting==
+
+Client1 -> Client2: Broadcast: I'm here
+Client2 -> Client2: Adds received IP
+Client1 -> Master: Broadcast: I'm here
+Master -> Master: Adds received IP
+
+Client2 -> Client1: Broadcast: I'm here
+Client1 -> Client1: Adds received IP
+Client2 -> Master: Broadcast: I'm here
+Master -> Master: Adds received IP
+
+Master -> Client1: Broadcast:\n    I'm here,\n    I'm master,\n    my asset's GUID\n    prev UDP session GUID\n    curr UDP session GUID
+Client1 -> Client1: Adds received IP
+
+Master -> Client2: Broadcast:\n    I'm here,\n    I'm master,\n    my asset's GUID\n    prev UDP session GUID\n    curr UDP session GUID
+Client2 -> Client2: Adds received IP
+
+==Chunk broadcasting==
+
+Client1 -> Client1: Next step
+Client1 -> Client2: Chunk part
+Client2 -> Client2: EMA
+Client2 -> Client1: Chunk part
+Client2 -> Client2: Next step
+Client1 -> Client1: EMA
+Master -> Master: Next step
+Master -> Client2: Chunk part
+Client2 -> Client2: EMA
+Client2 -> Client2: Next step
+
+Client2 -> Master: Chunk part
+Master -> Master: EMA
+Master ->Client1: Chunk part
+Client1 ->Client1: EMA
+
+==New node==
+
+Master -> Client1: Broadcast:\n    I'm here,\n    I'm master,\n    my asset's GUID\n    prev UDP session GUID\n    curr UDP session GUID
+
+Client1->Client1: Adds received IP
+Client1->Client1: Detects GUID missmatch
+
+Client1 -> Master: Connects via HTTP:\n    Assets with GUID required
+activate Client1
+activate Master
+Master -->(50) Client1: \n    Allows to download assets
+Master --> Client1: Closes connection
+deactivate Master
+deactivate Client1
+
+==Obsoleted Node recover==
+
+note over Client1
+Client1 gets 
+disconected for a while.
+end note
+
+Client1 -> Client2: Chunk part
+Client2 -> Client2: Chunk's session GUID \nis not in\n[\n    prev GUID,\n    curr GUID\n]
+Client2 -> Master: Chunk part
+Master -> Master: EMA
+Master -> Client2: Broadcast:\n    I'm here,\n    I'm master,\n    my asset's GUID\n    prev UDP session GUID\n    curr UDP session GUID
+Client2 -> Client2: Updates IP timestamp\n   updates current session GUID
+
+Master -> Client1: Broadcast:\n    I'm here,\n    I'm master,\n    my asset's GUID\n    prev UDP session GUID\n    curr UDP session GUID
+Client1 -> Client1: GUID session not in\n[\n    prev GUID,\n    curr GUID\n]
+Client1 -> Client1: Set override mode
+Client1 -> Client1: Updates IP timestamp\n   updates current session GUID
+
+Client2 -> Client2: Next step
+Client2 -> Client1: Chunk part
+Client1 -> Client1: Overrides tensor part\nwith given chunk
+
+note over Client1
+Override mode is enabled until
+all parts of weights is overrided
+
+Node is idle while override mode
+is enabled (not calculate steps)
+end note
+
+@enduml

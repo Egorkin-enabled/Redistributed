@@ -1,0 +1,84 @@
+@startuml 
+
+title Node Example
+
+!include ./style.puml
+
+rectangle "Local Network" {
+    rectangle "Main Node" as MN {
+        rectangle "Third-Party" {
+            object TensorBoard
+            object NGINX
+            NGINX-[hidden]>TensorBoard
+        }
+
+        object Assets
+        NGINX .right.> Assets
+        
+        rectangle "Python-Inside" {
+            object LocalImporter
+            object Node
+            object EchoRoomChunkSyncer
+
+            object TCPServerChunkSyncer
+            object UDPChunkSyncer
+
+            EchoRoomChunkSyncer -- TCPServerChunkSyncer
+            EchoRoomChunkSyncer -- UDPChunkSyncer
+
+            Node .right. LocalImporter: <<via Builder>>
+            Node .left. EchoRoomChunkSyncer: <<via Builder>>
+
+        }
+
+        Assets <.. LocalImporter
+    }
+
+    rectangle "Slave Node" as SN {
+
+        object "Assets" as AssetsCopy
+        
+        rectangle "Python-Inside" {
+            object "RemoteImporter" as RM1
+            object "Node" as SlaveNode
+
+            object "UDPChunkSyncer" as SlaveUDP
+
+
+            SlaveNode .right. RM1: <<via Builder>>
+            SlaveNode .. SlaveUDP: <<via Builder>>
+
+        }
+
+        AssetsCopy <.. RM1
+    }
+
+    MN -- SN: <<Via UDP>>
+}
+
+rectangle "External Network" {
+
+    rectangle "Remote Node" as RN {
+
+        object "Assets" as AssetsCopy2
+        
+        rectangle "Python-Inside" {
+            object "RemoteImporter" as RM2
+            object "Node" as RemoteNode
+
+            object TCPClientChunkSyncer
+
+
+            RemoteNode .right. RM2: <<via Builder>>
+            RemoteNode .. TCPClientChunkSyncer: <<via Builder>>
+
+        }
+
+
+        AssetsCopy2 <.. RM2
+    }
+}
+
+RN -- MN: <<Via TCP>>
+
+@enduml

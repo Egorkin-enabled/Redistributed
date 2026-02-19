@@ -1,0 +1,12 @@
+@startuml
+
+!include ./style.puml
+
+interface IApplier {
+    + Apply(:RemoteTensor, :Chunk)
+}
+
+IApplier <|... ConditionalEMAApplier
+
+
+@enduml
