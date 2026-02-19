@@ -1,0 +1,30 @@
+@startuml
+
+!include ./style.puml
+
+rectangle "CRC32 [uint32]" as CRC
+rectangle "Flags [uint8]" as Flags
+rectangle "GUID packs [uint32]" as Len
+rectangle "Asset GUIDs [L x 16 x byte]" as GUIDS
+rectangle "Previous session GUID [16 x byte]" as PrevSession
+rectangle "Current session GUID [16 x byte]" as CurrSession
+
+note "L" as L
+Len --> L
+
+CRC -> CurrSession
+CurrSession --> Flags
+Flags -> PrevSession: IsMaster -> enabled
+PrevSession --> Len
+Len -> GUIDS
+GUIDS --> EndOfPackage
+
+note "Currently only supports\n<<Is master>> flag" as NoteFlag
+NoteFlag -> Flags
+
+circle "EndOfPackage" as EndOfPackage2
+Flags --> EndOfPackage2: IsMaster -> disabled
+
+StartOfPackage --> CRC
+
+@enduml
